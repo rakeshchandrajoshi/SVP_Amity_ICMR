@@ -73,16 +73,47 @@ def main():
 
     if page == "Home":
         
+        # st.title("")
         st.markdown("<h1 style='text-align: center;'>Personalized Recommender System for Virus Research and Diagnosis Laboratory Network</h1>", unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center;'>Advancing Diagnostic Decision-Making through Artificial Intelligence</h2>", unsafe_allow_html=True)
-        st.write("""Welcome to the Virus Prediction App!""")
+        st.write("""
+        Welcome to the Virus Prediction App!
+
+                 
+        AI-driven Personalized Recommender System for healthcare, aiming to optimize diagnostic accuracy, 
+        streamline resource allocation, and improve patient outcomes by tailoring laboratory test recommendations, 
+        based on patient’s symptoms and other relevant details.
+
+        
+        ### Key Features:
+        - Trained on 25 lakhs+ patient data.
+        - Accepts input data such as age, gender, state, and various symptoms.
+        - Provides predictions based on a trained machine learning model.
+        - Easy-to-use interface for quick input and results.
+        
+        ### Instructions:
+        Navigate to the **Prediction** page using the sidebar to input patient details 
+        and get a virus classification prediction.
+        
+        """)
         st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
 
     elif page == "About":
         
         st.title("Virus Prediction App")
-        st.write("""Welcome to the Virus Prediction App!""")
-        st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+        
+        st.write("""
+        Welcome to the Virus Prediction App!
+        
+        This application is designed to assist healthcare professionals by predicting 
+        the most probable viral infection based on patient symptoms and demographic details.
+        
+        
+        """)
+        st.warning(
+        "**Disclaimer**: This site provides general information and is not a substitute for professional medical advice."
+    )
+
 
     elif page == "Prediction":
         # Page 2: Prediction
