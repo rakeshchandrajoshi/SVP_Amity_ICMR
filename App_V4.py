@@ -63,7 +63,7 @@ def initialize_defaults():
         'gender': "Male",
         'age_year': 25.0,
         'month': 1,
-        'durationofillness': 10,
+        'durationofillness': 0,
     }
     # Set default value "No" for each symptom
     for disease, symptoms in disease_groups.items():
@@ -134,7 +134,7 @@ def main():
             user_input['gender'] = st.radio("Gender", ['Male', 'Female'], key="gender")
             user_input['age_year'] = st.number_input("Age (in years)", min_value=0.0, max_value=200.0,step=0.1, key="age_year")
             user_input['month'] = st.number_input("Month (1-12)", min_value=1, max_value=12, key="month")
-            user_input['durationofillness'] = st.number_input("Duration of Illness (in days)", min_value=1, max_value=3000, key="durationofillness")
+            user_input['durationofillness'] = st.number_input("Duration of Illness (in days)", min_value=0, max_value=3000, key="durationofillness")
             
             st.header("Patient Symptoms")
             any_symptom_selected = False
