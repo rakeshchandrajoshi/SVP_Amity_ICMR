@@ -111,13 +111,32 @@ def main():
     page = st.sidebar.radio("Go to:", ["Home", "Prediction", "About"])
 
     if page == "Home":
-        st.markdown("<h1 style='text-align:center;'>Personalized Recommender System for Virus Diagnosis</h1>", unsafe_allow_html=True)
-        st.write("Welcome! Enter patient data and symptoms to predict possible viral infections.")
-        st.warning("This is for research support — not a medical diagnostic tool.")
+        st.markdown(
+            "<h1 style='text-align: center;'>Personalized Recommender System for Virus Research and Diagnosis Laboratory Network</h1>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: center;'>Advancing Diagnostic Decision-Making through Artificial Intelligence</h2>",
+            unsafe_allow_html=True)
+        st.write("""
+        Welcome to the Virus Prediction App!
+        
+        AI-driven Personalized Recommender System for healthcare, aiming to optimize diagnostic accuracy, 
+        streamline resource allocation, and improve patient outcomes by tailoring laboratory test recommendations, 
+        based on patient’s symptoms and other relevant details.
+        
+        Navigate to the **Prediction** page using the sidebar to input patient details 
+        and get a virus classification prediction.
+        """)
+        st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
 
     elif page == "About":
-        st.title("About This App")
-        st.write("An AI-powered system to predict viral infections from clinical symptoms and demographics.")
+        st.title("Virus Prediction App")
+        st.write("""
+        This application assists healthcare professionals by predicting 
+        the most probable viral infection based on patient symptoms and demographic details.
+        """)
+        st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+
 
     elif page == "Prediction":
         st.title("Symptoms-Based Virus Prediction")
