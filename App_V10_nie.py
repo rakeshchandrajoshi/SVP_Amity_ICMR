@@ -1,150 +1,150 @@
-import streamlit as st
-import pandas as pd
-import joblib
-import datetime
-import numpy as np
+# import streamlit as st
+# import pandas as pd
+# import joblib
+# import datetime
+# import numpy as np
 
-# ------------------------------
-# Define full state list
-states = [
-    'Andaman And Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar',
-    'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Delhi',
-    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand',
-    'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra',
-    'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab',
-    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
-    'Uttarakhand', 'West Bengal'
-]
+# # ------------------------------
+# # Define full state list
+# states = [
+#     'Andaman And Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar',
+#     'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Delhi',
+#     'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand',
+#     'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra',
+#     'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab',
+#     'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+#     'Uttarakhand', 'West Bengal'
+# ]
 
-# Month mapping
-months = { "January": 1, "February": 2, "March": 3, "April": 4, "May":5, "June":6, "July":7, 
-           "August":8, "September":9, "October":10, "November":11, "December":12 }
+# # Month mapping
+# months = { "January": 1, "February": 2, "March": 3, "April": 4, "May":5, "June":6, "July":7, 
+#            "August":8, "September":9, "October":10, "November":11, "December":12 }
 
-# ------------------------------
-# Full disease groups & symptoms
-disease_groups = {
-    "Diarrheal Diseases": ['diarrhoea', 'dia_fever', 'dia_vomiting', 'dia_abdominal_pain'],
-    "Respiratory Infections": ['res_sore', 'res_cough', 'res_fever', 'res_rhinorrhea'],
-    "Skin Infections": ['skin_rash', 'skin_itch', 'skin_lesions'],
-    "Vector Borne": ['vb_fever', 'vb_headache', 'vb_joint_pain', 'vb_rash'],
-    "Other": ['other_symptom1', 'other_symptom2']
-}
+# # ------------------------------
+# # Full disease groups & symptoms
+# disease_groups = {
+#     "Diarrheal Diseases": ['diarrhoea', 'dia_fever', 'dia_vomiting', 'dia_abdominal_pain'],
+#     "Respiratory Infections": ['res_sore', 'res_cough', 'res_fever', 'res_rhinorrhea'],
+#     "Skin Infections": ['skin_rash', 'skin_itch', 'skin_lesions'],
+#     "Vector Borne": ['vb_fever', 'vb_headache', 'vb_joint_pain', 'vb_rash'],
+#     "Other": ['other_symptom1', 'other_symptom2']
+# }
 
-# Symptom display names
-symptom_display_names = {
-    'diarrhoea': "Diarrhoea", 'dia_fever': "Fever", 'dia_vomiting': "Vomiting", 'dia_abdominal_pain': "Abdominal Pain",
-    'res_sore': "Sore Throat", 'res_cough': "Cough", 'res_fever': "Fever", 'res_rhinorrhea': "Runny Nose",
-    'skin_rash': "Rash", 'skin_itch': "Itching", 'skin_lesions': "Lesions",
-    'vb_fever': "Fever", 'vb_headache': "Headache", 'vb_joint_pain': "Joint Pain", 'vb_rash': "Rash",
-    'other_symptom1': "Other Symptom 1", 'other_symptom2': "Other Symptom 2"
-}
+# # Symptom display names
+# symptom_display_names = {
+#     'diarrhoea': "Diarrhoea", 'dia_fever': "Fever", 'dia_vomiting': "Vomiting", 'dia_abdominal_pain': "Abdominal Pain",
+#     'res_sore': "Sore Throat", 'res_cough': "Cough", 'res_fever': "Fever", 'res_rhinorrhea': "Runny Nose",
+#     'skin_rash': "Rash", 'skin_itch': "Itching", 'skin_lesions': "Lesions",
+#     'vb_fever': "Fever", 'vb_headache': "Headache", 'vb_joint_pain': "Joint Pain", 'vb_rash': "Rash",
+#     'other_symptom1': "Other Symptom 1", 'other_symptom2': "Other Symptom 2"
+# }
 
-# ------------------------------
-# Initialize default values
-def initialize_defaults():
-    defaults = {
-        'state_patient': states[0],
-        'gender': "Male",
-        'dob': datetime.date.today(),
-        'age_year_direct': 0,
-        'age_year': 0,
-        'month': "January",
-        'durationofillness': 1,
-    }
-    for disease, symptoms in disease_groups.items():
-        for symptom in symptoms:
-            defaults[symptom] = "No"
-        defaults[f"enable_{disease}"] = False
-    defaults["enable_dob"] = False
-    return defaults
+# # ------------------------------
+# # Initialize default values
+# def initialize_defaults():
+#     defaults = {
+#         'state_patient': states[0],
+#         'gender': "Male",
+#         'dob': datetime.date.today(),
+#         'age_year_direct': 0,
+#         'age_year': 0,
+#         'month': "January",
+#         'durationofillness': 1,
+#     }
+#     for disease, symptoms in disease_groups.items():
+#         for symptom in symptoms:
+#             defaults[symptom] = "No"
+#         defaults[f"enable_{disease}"] = False
+#     defaults["enable_dob"] = False
+#     return defaults
 
-# ------------------------------
-# Streamlit App
-def main():
-    st.title("Virus Prediction App")
+# # ------------------------------
+# # Streamlit App
+# def main():
+#     st.title("Virus Prediction App")
     
-    defaults = initialize_defaults()
+#     defaults = initialize_defaults()
 
-    # --- Patient Information ---
-    st.header("Patient Information")
-    state_patient = st.selectbox("State", states)
-    gender = st.radio("Gender", ["Male", "Female"])
+#     # --- Patient Information ---
+#     st.header("Patient Information")
+#     state_patient = st.selectbox("State", states)
+#     gender = st.radio("Gender", ["Male", "Female"])
     
-    enable_dob = st.checkbox("Enable Date of Birth", value=False)
-    if enable_dob:
-        dob = st.date_input("Date of Birth", value=datetime.date.today())
-        age_year = round((datetime.date.today() - dob).days / 365.25, 1)
-    else:
-        age_year_direct = st.number_input("Age in Years", min_value=0, max_value=120, value=0)
-        age_year = age_year_direct
+#     enable_dob = st.checkbox("Enable Date of Birth", value=False)
+#     if enable_dob:
+#         dob = st.date_input("Date of Birth", value=datetime.date.today())
+#         age_year = round((datetime.date.today() - dob).days / 365.25, 1)
+#     else:
+#         age_year_direct = st.number_input("Age in Years", min_value=0, max_value=120, value=0)
+#         age_year = age_year_direct
     
-    month = st.selectbox("Month of Symptom Onset", list(months.keys()), index=0)
-    durationofillness = st.number_input("Duration of Illness (days)", min_value=1, max_value=30, value=1)
+#     month = st.selectbox("Month of Symptom Onset", list(months.keys()), index=0)
+#     durationofillness = st.number_input("Duration of Illness (days)", min_value=1, max_value=30, value=1)
 
-    # --- Symptoms Selection ---
-    st.header("Symptoms")
-    selected_symptoms = {}
-    for disease, symptoms in disease_groups.items():
-        enable_group = st.checkbox(f"Enable {disease} Symptoms", value=False)
-        if enable_group:
-            for symptom in symptoms:
-                selected_symptoms[symptom] = st.selectbox(symptom_display_names[symptom], ["No", "Yes"], index=0)
-        else:
-            for symptom in symptoms:
-                selected_symptoms[symptom] = "No"
+#     # --- Symptoms Selection ---
+#     st.header("Symptoms")
+#     selected_symptoms = {}
+#     for disease, symptoms in disease_groups.items():
+#         enable_group = st.checkbox(f"Enable {disease} Symptoms", value=False)
+#         if enable_group:
+#             for symptom in symptoms:
+#                 selected_symptoms[symptom] = st.selectbox(symptom_display_names[symptom], ["No", "Yes"], index=0)
+#         else:
+#             for symptom in symptoms:
+#                 selected_symptoms[symptom] = "No"
 
-    # --- Predict Button ---
-    if st.button("Predict"):
-        # Collect input data
-        input_data = {
-            'state_patient': state_patient,
-            'gender': gender,
-            'durationofillness': durationofillness,
-            'age_year': age_year,
-            'month': months[month]
-        }
-        for symptom in selected_symptoms:
-            input_data[symptom] = 1 if selected_symptoms[symptom] == "Yes" else 0
+#     # --- Predict Button ---
+#     if st.button("Predict"):
+#         # Collect input data
+#         input_data = {
+#             'state_patient': state_patient,
+#             'gender': gender,
+#             'durationofillness': durationofillness,
+#             'age_year': age_year,
+#             'month': months[month]
+#         }
+#         for symptom in selected_symptoms:
+#             input_data[symptom] = 1 if selected_symptoms[symptom] == "Yes" else 0
 
-        input_df = pd.DataFrame([input_data])
+#         input_df = pd.DataFrame([input_data])
 
-        # Load models
-        try:
-            binary_model = joblib.load("binary_model.pkl")
-            multi_model = joblib.load("multi_class_model.pkl")
-        except Exception as e:
-            st.error(f"Error loading models: {e}")
-            return
+#         # Load models
+#         try:
+#             binary_model = joblib.load("binary_model.pkl")
+#             multi_model = joblib.load("multi_class_model.pkl")
+#         except Exception as e:
+#             st.error(f"Error loading models: {e}")
+#             return
 
-        # --- Binary Prediction ---
-        binary_prob = binary_model.predict_proba(input_df)[0][1]
-        st.subheader("Binary Prediction")
-        st.write(f"Probability of Viral Infection: {binary_prob*100:.2f}%")
+#         # --- Binary Prediction ---
+#         binary_prob = binary_model.predict_proba(input_df)[0][1]
+#         st.subheader("Binary Prediction")
+#         st.write(f"Probability of Viral Infection: {binary_prob*100:.2f}%")
 
-        # --- Multi-Class Prediction ---
-        multi_probs = multi_model.predict_proba(input_df)[0]
-        class_names = multi_model.classes_
-        sorted_probabilities = sorted(zip(class_names, multi_probs), key=lambda x: x[1], reverse=True)
+#         # --- Multi-Class Prediction ---
+#         multi_probs = multi_model.predict_proba(input_df)[0]
+#         class_names = multi_model.classes_
+#         sorted_probabilities = sorted(zip(class_names, multi_probs), key=lambda x: x[1], reverse=True)
 
-        # Automatic thresholding
-        probs = [prob for _, prob in sorted_probabilities]
-        mean_conf = np.mean(probs)
-        std_conf = np.std(probs)
-        top_prob = max(probs)
-        threshold_percent = min((mean_conf + std_conf) * 100, top_prob * 90, 95)
+#         # Automatic thresholding
+#         probs = [prob for _, prob in sorted_probabilities]
+#         mean_conf = np.mean(probs)
+#         std_conf = np.std(probs)
+#         top_prob = max(probs)
+#         threshold_percent = min((mean_conf + std_conf) * 100, top_prob * 90, 95)
 
-        st.subheader("Multi-Class Prediction")
-        predictions_shown = False
-        for i, (name, prob) in enumerate(sorted_probabilities):
-            if prob*100 >= threshold_percent:
-                st.write(f"{i+1}. **{name}** - {prob*100:.2f}% confidence")
-                predictions_shown = True
-        if not predictions_shown:
-            st.write("No predictions exceeded the automatic confidence threshold.")
+#         st.subheader("Multi-Class Prediction")
+#         predictions_shown = False
+#         for i, (name, prob) in enumerate(sorted_probabilities):
+#             if prob*100 >= threshold_percent:
+#                 st.write(f"{i+1}. **{name}** - {prob*100:.2f}% confidence")
+#                 predictions_shown = True
+#         if not predictions_shown:
+#             st.write("No predictions exceeded the automatic confidence threshold.")
 
-# ------------------------------
-if __name__ == "__main__":
-    main()
+# # ------------------------------
+# if __name__ == "__main__":
+#     main()
 
 
 
