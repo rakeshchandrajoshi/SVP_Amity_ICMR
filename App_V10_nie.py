@@ -48,7 +48,8 @@ disease_groups = {
     ],
     "Hemorrhagic Symptoms": [
         'hem_fever', 'hem_rigors', 'hem_headache', 'hem_chills', 'hem_malaise',
-        'hem_artharalgia', 'hem_myalgia', 'hem_hemanifestat', 'hem_retro_orbital'
+        'hem_artharalgia', 'hem_myalgia', 'hem_hemanifestat',
+        'hem_retro_orbital'
     ],
     "Conjunctivitis Symptoms": [
         'conjuctivities', 'con_fever', 'con_redness', 'con_discharge', 'con_scrusting'
@@ -110,6 +111,9 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to:", ["Home", "Prediction", "About"])
 
+    # =============================
+    # HOME PAGE
+    # =============================
     if page == "Home":
         st.markdown(
             "<h1 style='text-align: center;'>Personalized Recommender System for Virus Research and Diagnosis Laboratory Network</h1>",
@@ -120,24 +124,27 @@ def main():
         st.write("""
         Welcome to the Virus Prediction App!
         
-        AI-driven Personalized Recommender System for healthcare, aiming to optimize diagnostic accuracy, 
-        streamline resource allocation, and improve patient outcomes by tailoring laboratory test recommendations, 
-        based on patient’s symptoms and other relevant details.
-        
-        Navigate to the **Prediction** page using the sidebar to input patient details 
-        and get a virus classification prediction.
+        This AI-driven system predicts the most probable viral infection 
+        based on patient demographics and symptoms.
+        Navigate to the **Prediction** tab to begin.
         """)
-        st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+        st.warning("**Disclaimer**: This tool provides AI-driven suggestions for research use only.")
 
+    # =============================
+    # ABOUT PAGE
+    # =============================
     elif page == "About":
-        st.title("Virus Prediction App")
+        st.title("About This App")
         st.write("""
-        This application assists healthcare professionals by predicting 
-        the most probable viral infection based on patient symptoms and demographic details.
+        The system utilizes machine learning models trained on historical clinical data 
+        to identify probable viral infections.
+        It assists researchers and healthcare professionals in early detection and triage.
         """)
-        st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+        st.info("Developed by Amity Institute of Biotechnology, Amity University, India.")
 
-
+    # =============================
+    # PREDICTION PAGE
+    # =============================
     elif page == "Prediction":
         st.title("Symptoms-Based Virus Prediction")
 
@@ -147,7 +154,7 @@ def main():
             if k not in st.session_state:
                 st.session_state[k] = v
 
-        # --- Reset ---
+        # --- Reset button ---
         if st.button("Reset Selections"):
             for k, v in defaults.items():
                 st.session_state[k] = v
@@ -175,6 +182,7 @@ def main():
 
         # --- Symptoms ---
         st.header("Patient Symptoms")
+        symptom_selected = False
         for disease, symptoms in disease_groups.items():
             st.subheader(disease)
             enabled = st.checkbox(f"Enable {disease}", key=f"enable_{disease}")
@@ -184,73 +192,338 @@ def main():
                 disp = symptom_display_names[symptom]
                 col = cols[i % 3]
                 if enabled:
-                    user_input[symptom] = col.radio(disp, ["No", "Yes"], key=symptom, horizontal=True)
+                    val = col.radio(disp, ["No", "Yes"], key=symptom, horizontal=True)
+                    user_input[symptom] = val
+                    if val == "Yes":
+                        symptom_selected = True
                 else:
                     col.radio(disp, ["No", "Yes"], key=symptom, index=0, horizontal=True, disabled=True)
                     user_input[symptom] = "No"
 
         # --- Predict Button ---
         if st.button("Predict"):
-            try:
-                ordered_input = {f: user_input.get(f, "No") for f in features}
-                base_df = pd.DataFrame([ordered_input])
+            if user_input['age_year'] <= 0:
+                st.error("⚠️ Please enter a valid age greater than 0.")
+            elif not symptom_selected:
+                st.warning("⚠️ Please select at least one symptom before predicting.")
+            else:
+                try:
+                    ordered_input = {f: user_input.get(f, "No") for f in features}
+                    base_df = pd.DataFrame([ordered_input])
 
-                # --- Binary model ---
-                binary_model = joblib.load("model_dengue.pkl")
-                binary_encoders = joblib.load("label_encoders_dengue.pkl")
-                for col in base_df.columns:
-                    if col in binary_encoders:
-                        le = binary_encoders[col]
-                        base_df[col] = base_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
-                base_df = base_df.astype(np.int32)
-                binary_pred = binary_model.predict(base_df)[0]
-                probs = binary_model.predict_proba(base_df)[0]
-                binary_label = "Dengue" if np.argmax(probs) == 0 else "Non-Dengue"
-                st.info(f"Binary Model Prediction: **{binary_label}**")
+                    # --- Binary model ---
+                    binary_model = joblib.load("model_dengue.pkl")
+                    binary_encoders = joblib.load("label_encoders_dengue.pkl")
+                    for col in base_df.columns:
+                        if col in binary_encoders:
+                            le = binary_encoders[col]
+                            base_df[col] = base_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+                    base_df = base_df.astype(np.int32)
+                    binary_pred = binary_model.predict(base_df)[0]
+                    probs = binary_model.predict_proba(base_df)[0]
+                    binary_label = "Dengue" if np.argmax(probs) == 0 else "Non-Dengue"
+                    st.info(f"Binary Model Prediction: **{binary_label}**")
 
-                # --- Multiclass model ---
-                model = joblib.load("model_best_small_E.pkl")
-                encoders = joblib.load("label_encoders_best_small_E.pkl")
-                le_y = joblib.load("label_encoder_y_best_small_E.pkl")
+                    # --- Multiclass model ---
+                    model = joblib.load("model_best_small_E.pkl")
+                    encoders = joblib.load("label_encoders_best_small_E.pkl")
+                    le_y = joblib.load("label_encoder_y_best_small_E.pkl")
 
-                full_input_df = base_df.copy()
-                for col in full_input_df.columns:
-                    if col in encoders:
-                        le = encoders[col]
-                        full_input_df[col] = full_input_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+                    full_input_df = base_df.copy()
+                    for col in full_input_df.columns:
+                        if col in encoders:
+                            le = encoders[col]
+                            full_input_df[col] = full_input_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
 
-                probs = model.predict_proba(full_input_df)[0]
-                class_names = le_y.inverse_transform(range(len(probs)))
-                predictions = sorted(zip(class_names, probs), key=lambda x: x[1], reverse=True)
+                    probs = model.predict_proba(full_input_df)[0]
+                    class_names = le_y.inverse_transform(range(len(probs)))
+                    predictions = sorted(zip(class_names, probs), key=lambda x: x[1], reverse=True)
 
-                mean_conf = np.mean(probs)
-                std_conf = np.std(probs)
-                threshold_percent = min((mean_conf + std_conf) * 100, 95)
+                    mean_conf = np.mean(probs)
+                    std_conf = np.std(probs)
+                    threshold_percent = min((mean_conf + std_conf) * 100, 95)
 
-                if binary_label.lower() == "non-dengue":
-                    predictions = [(n, p) for n, p in predictions if n.lower() != "dengue"]
+                    if binary_label.lower() == "non-dengue":
+                        predictions = [(n, p) for n, p in predictions if n.lower() != "dengue"]
 
-                st.header("Predicted Viruses (Adaptive Confidence)")
-                shown = False
-                for i, (name, prob) in enumerate(predictions):
-                    if prob * 100 >= threshold_percent:
-                        st.success(f"{i + 1}. **{name}** — {prob * 100:.2f}% confidence")
-                        shown = True
+                    st.header("Predicted Viruses (Adaptive Confidence)")
+                    shown = False
+                    for i, (name, prob) in enumerate(predictions):
+                        if prob * 100 >= threshold_percent:
+                            st.success(f"{i + 1}. **{name}** — {prob * 100:.2f}% confidence")
+                            shown = True
 
-                if not shown:
-                    name, prob = predictions[0]
-                    st.info(f"Top prediction: **{name}** ({prob * 100:.2f}%)")
+                    if not shown:
+                        name, prob = predictions[0]
+                        st.info(f"Top prediction: **{name}** ({prob * 100:.2f}%)")
 
-                st.caption(f"(Adaptive threshold: {threshold_percent:.2f}%)")
-                st.warning("This report was generated by AI. Please consult a healthcare professional.")
+                    st.caption(f"(Adaptive threshold: {threshold_percent:.2f}%)")
+                    st.warning("⚠️ This AI-generated report is for research assistance, not clinical use.")
 
-            except Exception as e:
-                st.error(f"Error during prediction: {e}")
+                except Exception as e:
+                    st.error(f"Error during prediction: {e}")
 
 
 # Run
 if __name__ == "__main__":
     main()
+
+
+
+
+# import streamlit as st
+# import pandas as pd
+# import joblib
+# import numpy as np
+# import datetime
+
+# # =============================
+# # Data definitions
+# # =============================
+# states = [
+#     'Andaman And Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam',
+#     'Bihar', 'Chandigarh', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana',
+#     'Himachal Pradesh', 'Jammu And Kashmir', 'Jharkhand', 'Karnataka', 'Kerala',
+#     'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+#     'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim',
+#     'Tamil Nadu', 'Telangana', 'The Dadra And Nagar Haveli And Daman And Diu',
+#     'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+# ]
+
+# months = {
+#     "January": 1, "February": 2, "March": 3, "April": 4,
+#     "May": 5, "June": 6, "July": 7, "August": 8,
+#     "September": 9, "October": 10, "November": 11, "December": 12
+# }
+# default_dob = datetime.date.today()
+
+# # =============================
+# # Disease categories and symptoms
+# # =============================
+# disease_groups = {
+#     "Diarrheal Diseases": [
+#         'diarrhoea', 'dia_fever', 'dia_diarrhoea', 'dia_dysentery', 'dia_pain', 'dia_vomiting'
+#     ],
+#     "Respiratory Infections": [
+#         'respiratory_c', 'res_sore', 'res_cough', 'res_rhinorrhoe', 'res_breath', 'res_fever'
+#     ],
+#     "Fever and Inflammatory Responses": [
+#         'fev_fever', 'fev_any_loc_sym', 'rash_mac', 'rash_papule', 'rash_mac_pop',
+#         'rash_eschar', 'rash_pustule', 'rash_bullae', 'rash_fev'
+#     ],
+#     "Jaundice and Hepatic Issues": [
+#         'jaundice', 'jau_fever', 'jau_jaundice', 'jau_urine', 'jau_hep',
+#         'jau_nausea', 'jau_vomiting', 'jau_abpain'
+#     ],
+#     "Neurological Symptoms (Encephalitis)": [
+#         'encephalitis', 'enc_fever', 'enc_seizures', 'enc_rigidity', 'enc_sensorium',
+#         'enc_ment_status', 'enc_somnelen', 'enc_irritab'
+#     ],
+#     "Hemorrhagic Symptoms": [
+#         'hem_fever', 'hem_rigors', 'hem_headache', 'hem_chills', 'hem_malaise',
+#         'hem_artharalgia', 'hem_myalgia', 'hem_hemanifestat', 'hem_retro_orbital'
+#     ],
+#     "Conjunctivitis Symptoms": [
+#         'conjuctivities', 'con_fever', 'con_redness', 'con_discharge', 'con_scrusting'
+#     ]
+# }
+
+# # ✅ Feature order must match your trained model
+# features = [
+#     'state_patient', 'gender', 'durationofillness', 'diarrhoea', 'dia_fever', 'dia_diarrhoea',
+#     'dia_dysentery', 'dia_pain', 'dia_vomiting', 'respiratory_c', 'res_sore', 'res_cough',
+#     'res_rhinorrhoe', 'res_breath', 'res_fever', 'fev_fever', 'fev_any_loc_sym', 'rash_mac',
+#     'rash_papule', 'rash_mac_pop', 'rash_eschar', 'rash_pustule', 'rash_bullae', 'rash_fev',
+#     'jaundice', 'jau_fever', 'jau_jaundice', 'jau_urine', 'jau_hep', 'jau_nausea', 'jau_vomiting',
+#     'jau_abpain', 'encephalitis', 'enc_fever', 'enc_seizures', 'enc_rigidity', 'enc_sensorium',
+#     'enc_ment_status', 'enc_somnelen', 'enc_irritab', 'hem_fever', 'hem_rigors', 'hem_headache',
+#     'hem_chills', 'hem_malaise', 'hem_artharalgia', 'hem_myalgia', 'hem_hemanifestat',
+#     'hem_retro_orbital', 'conjuctivities', 'con_fever', 'con_redness', 'con_discharge',
+#     'con_scrusting', 'age_year', 'month'
+# ]
+
+# symptom_display_names = {s: s.replace('_', ' ').title() for g in disease_groups.values() for s in g}
+
+
+# # =============================
+# # Defaults
+# # =============================
+# def initialize_defaults():
+#     today = datetime.date.today()
+#     default_age = (today - default_dob).days / 365.25
+#     defaults = {
+#         'state_patient': states[0],
+#         'gender': "Male",
+#         'dob': default_dob,
+#         'age_year_direct': 0,
+#         'age_year': round(default_age, 1),
+#         'month': "January",
+#         'durationofillness': 1,
+#         "enable_dob": False
+#     }
+#     for disease, symptoms in disease_groups.items():
+#         defaults[f"enable_{disease}"] = False
+#         for symptom in symptoms:
+#             defaults[symptom] = "No"
+#     return defaults
+
+
+# # =============================
+# # Main App
+# # =============================
+# def main():
+#     st.set_page_config(page_title="Virus Prediction App", layout="wide")
+
+#     # Header
+#     col1, col2, col3 = st.columns([1, 3, 1])
+#     with col1: st.image("logo_1.jpeg", width=300)
+#     with col2: st.image("logo_2.jpeg", width=250)
+#     with col3: st.image("Amity_logo2.png", width=250)
+
+#     st.sidebar.title("Navigation")
+#     page = st.sidebar.radio("Go to:", ["Home", "Prediction", "About"])
+
+#     if page == "Home":
+#         st.markdown(
+#             "<h1 style='text-align: center;'>Personalized Recommender System for Virus Research and Diagnosis Laboratory Network</h1>",
+#             unsafe_allow_html=True)
+#         st.markdown(
+#             "<h2 style='text-align: center;'>Advancing Diagnostic Decision-Making through Artificial Intelligence</h2>",
+#             unsafe_allow_html=True)
+#         st.write("""
+#         Welcome to the Virus Prediction App!
+        
+#         AI-driven Personalized Recommender System for healthcare, aiming to optimize diagnostic accuracy, 
+#         streamline resource allocation, and improve patient outcomes by tailoring laboratory test recommendations, 
+#         based on patient’s symptoms and other relevant details.
+        
+#         Navigate to the **Prediction** page using the sidebar to input patient details 
+#         and get a virus classification prediction.
+#         """)
+#         st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+
+#     elif page == "About":
+#         st.title("Virus Prediction App")
+#         st.write("""
+#         This application assists healthcare professionals by predicting 
+#         the most probable viral infection based on patient symptoms and demographic details.
+#         """)
+#         st.warning("**Disclaimer**: This site provides general information and is not a substitute for professional medical advice.")
+
+
+#     elif page == "Prediction":
+#         st.title("Symptoms-Based Virus Prediction")
+
+#         # --- Initialize defaults ---
+#         defaults = initialize_defaults()
+#         for k, v in defaults.items():
+#             if k not in st.session_state:
+#                 st.session_state[k] = v
+
+#         # --- Reset ---
+#         if st.button("Reset Selections"):
+#             for k, v in defaults.items():
+#                 st.session_state[k] = v
+#             st.success("All inputs reset to default values.")
+
+#         # --- Demographics ---
+#         st.header("Patient Demographics")
+#         user_input = {}
+#         user_input['state_patient'] = st.selectbox("State", states, key="state_patient")
+#         user_input['gender'] = st.radio("Gender", ["Male", "Female"], key="gender")
+
+#         enable_dob = st.checkbox("Select Date of Birth", key="enable_dob")
+#         today = datetime.date.today()
+#         if enable_dob:
+#             dob = st.date_input("Date of Birth", value=default_dob, max_value=today, key="dob")
+#             age_calc = (today - dob).days / 365.25
+#             st.write(f"Calculated Age: {round(age_calc, 1)} years")
+#             user_input['age_year'] = round(age_calc, 1)
+#         else:
+#             user_input['age_year'] = st.number_input("Age (in years)", 0.0, 200.0, step=1.0, key="age_year_direct")
+
+#         month_name = st.selectbox("Month of Illness", list(months.keys()), key="month")
+#         user_input['month'] = months[month_name]
+#         user_input['durationofillness'] = st.number_input("Duration of Illness (days)", 1, 3000, key="durationofillness")
+
+#         # --- Symptoms ---
+#         st.header("Patient Symptoms")
+#         for disease, symptoms in disease_groups.items():
+#             st.subheader(disease)
+#             enabled = st.checkbox(f"Enable {disease}", key=f"enable_{disease}")
+
+#             cols = st.columns(3)
+#             for i, symptom in enumerate(symptoms):
+#                 disp = symptom_display_names[symptom]
+#                 col = cols[i % 3]
+#                 if enabled:
+#                     user_input[symptom] = col.radio(disp, ["No", "Yes"], key=symptom, horizontal=True)
+#                 else:
+#                     col.radio(disp, ["No", "Yes"], key=symptom, index=0, horizontal=True, disabled=True)
+#                     user_input[symptom] = "No"
+
+#         # --- Predict Button ---
+#         if st.button("Predict"):
+#             try:
+#                 ordered_input = {f: user_input.get(f, "No") for f in features}
+#                 base_df = pd.DataFrame([ordered_input])
+
+#                 # --- Binary model ---
+#                 binary_model = joblib.load("model_dengue.pkl")
+#                 binary_encoders = joblib.load("label_encoders_dengue.pkl")
+#                 for col in base_df.columns:
+#                     if col in binary_encoders:
+#                         le = binary_encoders[col]
+#                         base_df[col] = base_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+#                 base_df = base_df.astype(np.int32)
+#                 binary_pred = binary_model.predict(base_df)[0]
+#                 probs = binary_model.predict_proba(base_df)[0]
+#                 binary_label = "Dengue" if np.argmax(probs) == 0 else "Non-Dengue"
+#                 st.info(f"Binary Model Prediction: **{binary_label}**")
+
+#                 # --- Multiclass model ---
+#                 model = joblib.load("model_best_small_E.pkl")
+#                 encoders = joblib.load("label_encoders_best_small_E.pkl")
+#                 le_y = joblib.load("label_encoder_y_best_small_E.pkl")
+
+#                 full_input_df = base_df.copy()
+#                 for col in full_input_df.columns:
+#                     if col in encoders:
+#                         le = encoders[col]
+#                         full_input_df[col] = full_input_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+
+#                 probs = model.predict_proba(full_input_df)[0]
+#                 class_names = le_y.inverse_transform(range(len(probs)))
+#                 predictions = sorted(zip(class_names, probs), key=lambda x: x[1], reverse=True)
+
+#                 mean_conf = np.mean(probs)
+#                 std_conf = np.std(probs)
+#                 threshold_percent = min((mean_conf + std_conf) * 100, 95)
+
+#                 if binary_label.lower() == "non-dengue":
+#                     predictions = [(n, p) for n, p in predictions if n.lower() != "dengue"]
+
+#                 st.header("Predicted Viruses (Adaptive Confidence)")
+#                 shown = False
+#                 for i, (name, prob) in enumerate(predictions):
+#                     if prob * 100 >= threshold_percent:
+#                         st.success(f"{i + 1}. **{name}** — {prob * 100:.2f}% confidence")
+#                         shown = True
+
+#                 if not shown:
+#                     name, prob = predictions[0]
+#                     st.info(f"Top prediction: **{name}** ({prob * 100:.2f}%)")
+
+#                 st.caption(f"(Adaptive threshold: {threshold_percent:.2f}%)")
+#                 st.warning("This report was generated by AI. Please consult a healthcare professional.")
+
+#             except Exception as e:
+#                 st.error(f"Error during prediction: {e}")
+
+
+# # Run
+# if __name__ == "__main__":
+#     main()
 
 
 
