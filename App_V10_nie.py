@@ -140,7 +140,7 @@ def main():
         to identify probable viral infections.
         It assists researchers and healthcare professionals in early detection and triage.
         """)
-        st.info("Developed by Amity Institute of Biotechnology, Amity University, India.")
+        st.info("Developed by Amity Centre for Artificial Intelligence, Amity University, India.")
 
     # =============================
     # PREDICTION PAGE
